@@ -30,7 +30,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	dstFs, err := filesystem.Connect(conf.SourceConnection)
+	dstFs, err := filesystem.Connect(conf.DstConnection)
 
 	if err != nil {
 		log.Panic(err)

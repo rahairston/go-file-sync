@@ -3,6 +3,9 @@ package filesystem
 import (
 	"io"
 	"log"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/rahairston/go-file-sync/common"
 )
@@ -46,15 +49,12 @@ func (dir DirClient) SyncFile(fileName string, c chan string) {
 		panic(err)
 	}
 
-	dstPath := dir.dstFs.CorrectPathSeparator(dir.dstFs.GetPath() + fileName)
-
-	dstFile, err := dir.dstFs.Open(fileName)
-
-	if err != nil {
-		panic(err)
-	}
+	baseFileName := strings.TrimPrefix(fileName, dir.sourceFs.GetPath())
+	dstPath := dir.dstFs.CorrectPathSeparator(dir.dstFs.GetPath() + baseFileName)
+	dstFile, err := dir.dstFs.Open(dstPath)
 
 	if err != nil {
+		os.MkdirAll(filepath.Dir(dstPath), os.ModePerm)
 		file, err := dir.dstFs.Create(dstPath)
 
 		if err != nil {
@@ -63,7 +63,10 @@ func (dir DirClient) SyncFile(fileName string, c chan string) {
 		io.Copy(file, srcFile)
 	} else {
 		if !common.DeepCompare(srcFile, dstFile) {
-			io.Copy(dstFile, srcFile)
+			_, err := io.Copy(dstFile, srcFile)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 

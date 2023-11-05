@@ -48,7 +48,7 @@ func (lc LocalClient) Create(fileName string) (common.SharedFile, error) {
 }
 
 func (lc LocalClient) Open(fileName string) (common.SharedFile, error) {
-	return os.Open(fileName)
+	return os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0644)
 }
 
 func (lc LocalClient) CorrectPathSeparator(path string) string {
