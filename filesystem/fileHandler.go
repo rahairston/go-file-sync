@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/rahairston/go-file-sync/common"
 )
@@ -24,29 +25,47 @@ func BuildDirClient(syncConfig *common.SyncObject, sourceFs common.FileSystem, d
 	}, nil
 }
 
-func (dir DirClient) SyncFiles() {
+func (dir DirClient) SyncFiles(lastFileMod map[string]string) map[string]string {
 	defer dir.sourceFs.Close()
 	defer dir.dstFs.Close()
 
+	fileMod := make(map[string]string)
+
 	fileNames := dir.sourceFs.GetFileNames(dir.sourceFs.GetPath(), dir.exclusions)
 
-	c := make(chan string, len(fileNames))
+	c := make(chan struct {
+		string
+		time.Time
+	}, len(fileNames))
 
 	for _, fileName := range fileNames {
-		go dir.SyncFile(fileName, c)
+		go dir.SyncFile(fileName, lastFileMod[fileName], c)
 	}
 
 	for i := 0; i < cap(c); i++ {
-		log.Println(<-c)
+		file := <-c
+		log.Println(file.string)
+		fileMod[file.string] = file.Time.String()
 	}
+
+	return fileMod
 }
 
-func (dir DirClient) SyncFile(fileName string, c chan string) {
-
+func (dir DirClient) SyncFile(fileName string, lastModifiedString string, c chan struct {
+	string
+	time.Time
+}) {
 	srcFile, err := dir.sourceFs.Open(fileName)
+	srcInfo, _ := srcFile.Stat()
+	srcMod := srcInfo.ModTime()
 
 	if err != nil {
 		panic(err)
+	}
+
+	lastModifiedDt, err := time.Parse("2006-01-02 15:04", lastModifiedString)
+	if err != nil {
+		lastModifiedDt = srcMod // SUB
 	}
 
 	baseFileName := strings.TrimPrefix(fileName, dir.sourceFs.GetPath())
@@ -61,14 +80,15 @@ func (dir DirClient) SyncFile(fileName string, c chan string) {
 			panic(err)
 		}
 		io.Copy(file, srcFile)
-	} else {
-		if !common.DeepCompare(srcFile, dstFile) {
-			_, err := io.Copy(dstFile, srcFile)
-			if err != nil {
-				panic(err)
-			}
+	} else if srcMod.After(lastModifiedDt) && !common.DeepCompare(srcFile, dstFile) {
+		_, err := io.Copy(dstFile, srcFile)
+		if err != nil {
+			panic(err)
 		}
 	}
 
-	c <- fileName
+	c <- struct {
+		string
+		time.Time
+	}{fileName, srcMod}
 }

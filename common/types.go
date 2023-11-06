@@ -3,6 +3,7 @@ package common
 import (
 	"io/fs"
 	"os"
+	"time"
 )
 
 type SharedFile interface {
@@ -58,4 +59,9 @@ type SyncObject struct {
 	SourceConnection ConnectionObject `json:"source"`
 	DstConnection    ConnectionObject `json:"destination"`
 	Exclusions       ExcludeObject    `json:"exclude"`
+}
+
+type LastModifiedObject struct {
+	Path         string
+	LastModified time.Time
 }

@@ -5,7 +5,7 @@ import (
 	"runtime"
 )
 
-type BackupConstants struct {
+type SyncConstants struct {
 	LoggingLocation string
 	ConfigLocation  string
 }
@@ -15,7 +15,7 @@ const (
 	LastRunFileName string = "last_run.conf"
 )
 
-func GetOSConstants() *BackupConstants {
+func GetOSConstants() *SyncConstants {
 	opsys := runtime.GOOS
 	switch opsys {
 	case "windows":
@@ -23,12 +23,12 @@ func GetOSConstants() *BackupConstants {
 		if home == "" {
 			home = os.Getenv("USERPROFILE")
 		}
-		return &BackupConstants{
+		return &SyncConstants{
 			LoggingLocation: home + "\\AppData\\Local\\go-file-sync\\",
 			ConfigLocation:  home + "\\AppData\\Local\\go-file-sync\\",
 		}
 	default:
-		return &BackupConstants{
+		return &SyncConstants{
 			LoggingLocation: "/var/log/go-file-sync/",
 			ConfigLocation:  "/etc/go-file-sync/",
 		}

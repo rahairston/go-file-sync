@@ -5,12 +5,13 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/rahairston/go-file-sync/common"
 )
 
-func BuildBackupConfig(consts *common.BackupConstants) (*common.SyncObject, error) {
+func BuildSyncConfig(consts *common.SyncConstants) (*common.SyncObject, error) {
 	_, err := os.Stat(consts.ConfigLocation)
 	if err != nil {
 		return nil, err
@@ -23,7 +24,7 @@ func BuildBackupConfig(consts *common.BackupConstants) (*common.SyncObject, erro
 	return parseJSONConfig(consts)
 }
 
-func parseJSONConfig(consts *common.BackupConstants) (*common.SyncObject, error) {
+func parseJSONConfig(consts *common.SyncConstants) (*common.SyncObject, error) {
 	jsonFile, err := os.Open(consts.ConfigLocation + "config.json")
 
 	if err != nil {
@@ -45,7 +46,49 @@ func parseJSONConfig(consts *common.BackupConstants) (*common.SyncObject, error)
 	return &config, nil
 }
 
-func SetLoggingFile(consts *common.BackupConstants) *os.File {
+func ParseLastModifiedFile(consts *common.SyncConstants, srcPath string) map[string]string {
+	fileMod := make(map[string]string)
+
+	file, err := os.Open(consts.ConfigLocation + strings.ReplaceAll(srcPath, "/", "_"))
+	if err != nil {
+		return fileMod
+	}
+
+	defer file.Close()
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return fileMod
+	}
+
+	err = json.Unmarshal([]byte(data), &fileMod)
+
+	if err != nil {
+		return fileMod
+	}
+
+	return fileMod
+}
+
+func WriteLastModifiedFile(consts *common.SyncConstants, srcPath string, modData map[string]string) {
+	file, err := os.OpenFile(consts.ConfigLocation+strings.ReplaceAll(srcPath, "/", "_")+".json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer file.Close()
+
+	jsonString, err := json.Marshal(modData)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file.Write(jsonString)
+}
+
+func SetLoggingFile(consts *common.SyncConstants) *os.File {
 	now := time.Now().UTC()
 
 	logFile, err := os.OpenFile(consts.LoggingLocation+now.Format("2006-01-02")+".log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -56,7 +99,7 @@ func SetLoggingFile(consts *common.BackupConstants) *os.File {
 
 	log.SetOutput(logFile)
 
-	log.Println("Starting...")
+	log.Println("Starting File Sync...")
 
 	return logFile
 }

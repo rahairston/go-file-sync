@@ -14,11 +14,7 @@ func main() {
 	logFile := config.SetLoggingFile(consts)
 	defer logFile.Close()
 
-	conf, err := config.BuildBackupConfig(consts)
-
-	if err != nil {
-		log.Panic(err)
-	}
+	conf, err := config.BuildSyncConfig(consts)
 
 	if err != nil {
 		log.Panic(err)
@@ -29,6 +25,8 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+
+	lastFileMod := config.ParseLastModifiedFile(consts, srcFs.GetPath())
 
 	dstFs, err := filesystem.Connect(conf.DstConnection)
 
@@ -42,7 +40,9 @@ func main() {
 		log.Panic(err)
 	}
 
-	dirClient.SyncFiles()
+	updateFileMod := dirClient.SyncFiles(lastFileMod)
+
+	config.WriteLastModifiedFile(consts, srcFs.GetPath(), updateFileMod)
 
 	log.Println("Sync Complete.")
 }
