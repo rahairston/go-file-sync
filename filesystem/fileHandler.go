@@ -55,7 +55,7 @@ func (dir DirClient) SyncFile(fileName string, lastModifiedString string, c chan
 	string
 	time.Time
 }) {
-	srcFile, err := dir.sourceFs.Open(fileName)
+	srcFile, err := dir.sourceFs.OpenFile(fileName, os.O_RDONLY)
 	srcInfo, _ := srcFile.Stat()
 	srcMod := srcInfo.ModTime()
 
@@ -63,14 +63,14 @@ func (dir DirClient) SyncFile(fileName string, lastModifiedString string, c chan
 		panic(err)
 	}
 
-	lastModifiedDt, err := time.Parse("2006-01-02 15:04", lastModifiedString)
+	lastModifiedDt, err := time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", lastModifiedString)
 	if err != nil {
-		lastModifiedDt = srcMod // SUB
+		lastModifiedDt = srcMod.Add(time.Duration(-100))
 	}
 
 	baseFileName := strings.TrimPrefix(fileName, dir.sourceFs.GetPath())
 	dstPath := dir.dstFs.CorrectPathSeparator(dir.dstFs.GetPath() + baseFileName)
-	dstFile, err := dir.dstFs.Open(dstPath)
+	dstFile, err := dir.dstFs.OpenFile(dstPath, os.O_RDWR|os.O_CREATE)
 
 	if err != nil {
 		os.MkdirAll(filepath.Dir(dstPath), os.ModePerm)
@@ -81,6 +81,7 @@ func (dir DirClient) SyncFile(fileName string, lastModifiedString string, c chan
 		}
 		io.Copy(file, srcFile)
 	} else if srcMod.After(lastModifiedDt) && !common.DeepCompare(srcFile, dstFile) {
+		dir.dstFs.Truncate(dstFile.Name(), 0)
 		_, err := io.Copy(dstFile, srcFile)
 		if err != nil {
 			panic(err)

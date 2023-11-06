@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io/fs"
 	"net"
-	"os"
 	"strings"
 
 	"github.com/rahairston/go-file-sync/common"
@@ -88,8 +87,8 @@ func (smbClient SmbClient) Stat(fileName string) (fs.FileInfo, error) {
 	return smbClient.fs.Stat(fileName)
 }
 
-func (smbClient SmbClient) Open(fileName string) (common.SharedFile, error) {
-	return smbClient.fs.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0644)
+func (smbClient SmbClient) OpenFile(fileName string, flag int) (common.SharedFile, error) {
+	return smbClient.fs.OpenFile(fileName, flag, 0644)
 }
 
 func (smbClient SmbClient) Create(fileName string) (common.SharedFile, error) {
@@ -120,6 +119,10 @@ func (smbClient SmbClient) GetFileNames(path string, exclusions common.ExcludeOb
 
 func (smbClient SmbClient) ReadFile(fileName string) ([]byte, error) {
 	return smbClient.fs.ReadFile(fileName)
+}
+
+func (smbClient SmbClient) Truncate(fileName string, newsize int64) error {
+	return smbClient.fs.Truncate(fileName, newsize)
 }
 
 func (smbClient SmbClient) Close() {

@@ -47,8 +47,8 @@ func (lc LocalClient) Create(fileName string) (common.SharedFile, error) {
 	return os.Create(fileName)
 }
 
-func (lc LocalClient) Open(fileName string) (common.SharedFile, error) {
-	return os.OpenFile(fileName, os.O_RDWR|os.O_CREATE, 0644)
+func (lc LocalClient) OpenFile(fileName string, flag int) (common.SharedFile, error) {
+	return os.OpenFile(fileName, flag, 0644)
 }
 
 func (lc LocalClient) CorrectPathSeparator(path string) string {
@@ -87,6 +87,10 @@ func (lc LocalClient) GetFileNames(path string, exclusions common.ExcludeObject)
 
 func (lc LocalClient) ReadFile(fileName string) ([]byte, error) {
 	return os.ReadFile(fileName)
+}
+
+func (lc LocalClient) Truncate(fileName string, newsize int64) error {
+	return os.Truncate(fileName, newsize)
 }
 
 func (lc LocalClient) Close() {

@@ -19,9 +19,10 @@ type FileSystem interface {
 	CorrectPathSeparator(path string) string
 	Stat(fileName string) (fs.FileInfo, error)
 	Create(fileName string) (SharedFile, error)
-	Open(fileName string) (SharedFile, error)
+	OpenFile(fileName string, flag int) (SharedFile, error)
 	GetFileNames(path string, exclusions ExcludeObject) []string
 	ReadFile(fileName string) ([]byte, error)
+	Truncate(fileName string, newsize int64) error
 	Close()
 }
 

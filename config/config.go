@@ -14,10 +14,12 @@ import (
 func BuildSyncConfig(consts *common.SyncConstants) (*common.SyncObject, error) {
 	_, err := os.Stat(consts.ConfigLocation)
 	if err != nil {
+		log.Fatal("config file not found")
 		return nil, err
 	}
 	_, err = os.Stat(consts.LoggingLocation)
 	if err != nil {
+		log.Fatal("log file not found")
 		return nil, err
 	}
 
@@ -48,8 +50,9 @@ func parseJSONConfig(consts *common.SyncConstants) (*common.SyncObject, error) {
 
 func ParseLastModifiedFile(consts *common.SyncConstants, srcPath string) map[string]string {
 	fileMod := make(map[string]string)
+	filePath := strings.ReplaceAll(strings.ReplaceAll(srcPath, "/", "_"), "\\", "_")
 
-	file, err := os.Open(consts.ConfigLocation + strings.ReplaceAll(srcPath, "/", "_"))
+	file, err := os.Open(consts.ConfigLocation + filePath + ".json")
 	if err != nil {
 		return fileMod
 	}
@@ -71,7 +74,8 @@ func ParseLastModifiedFile(consts *common.SyncConstants, srcPath string) map[str
 }
 
 func WriteLastModifiedFile(consts *common.SyncConstants, srcPath string, modData map[string]string) {
-	file, err := os.OpenFile(consts.ConfigLocation+strings.ReplaceAll(srcPath, "/", "_")+".json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
+	filePath := strings.ReplaceAll(strings.ReplaceAll(srcPath, "/", "_"), "\\", "_")
+	file, err := os.OpenFile(consts.ConfigLocation+filePath+".json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 
 	if err != nil {
 		log.Fatal(err)
