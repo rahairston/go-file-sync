@@ -68,8 +68,9 @@ func (dir DirClient) SyncFile(fileName string, lastModifiedString string, c chan
 		lastModifiedDt = srcMod.Add(time.Duration(-100))
 	}
 
-	baseFileName := strings.TrimPrefix(fileName, dir.sourceFs.GetPath())
-	dstPath := dir.dstFs.CorrectPathSeparator(dir.dstFs.GetPath() + baseFileName)
+	relativeFileName := strings.TrimPrefix(fileName, dir.sourceFs.GetPath())
+	newFilePath := filepath.Base(dir.sourceFs.GetPath()) + common.Separator + relativeFileName
+	dstPath := dir.dstFs.CorrectPathSeparator(dir.dstFs.GetPath() + newFilePath)
 	dstFile, err := dir.dstFs.OpenFile(dstPath, os.O_RDWR|os.O_CREATE)
 
 	if err != nil {

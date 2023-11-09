@@ -20,29 +20,31 @@ func main() {
 		log.Panic(err)
 	}
 
-	srcFs, err := filesystem.Connect(conf.SourceConnection)
-
-	if err != nil {
-		log.Panic(err)
-	}
-
-	lastFileMod := config.ParseLastModifiedFile(consts, srcFs.GetPath())
-
 	dstFs, err := filesystem.Connect(conf.DstConnection)
 
 	if err != nil {
 		log.Panic(err)
 	}
 
-	dirClient, err := filesystem.BuildDirClient(conf, srcFs, dstFs)
+	for _, source := range conf.SourceConnections {
+		srcFs, err := filesystem.Connect(source)
 
-	if err != nil {
-		log.Panic(err)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		lastFileMod := config.ParseLastModifiedFile(consts, srcFs.GetPath())
+
+		dirClient, err := filesystem.BuildDirClient(conf, srcFs, dstFs)
+
+		if err != nil {
+			log.Panic(err)
+		}
+
+		updateFileMod := dirClient.SyncFiles(lastFileMod)
+
+		config.WriteLastModifiedFile(consts, srcFs.GetPath(), updateFileMod)
 	}
-
-	updateFileMod := dirClient.SyncFiles(lastFileMod)
-
-	config.WriteLastModifiedFile(consts, srcFs.GetPath(), updateFileMod)
 
 	log.Println("Sync Complete.")
 }

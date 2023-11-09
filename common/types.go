@@ -57,9 +57,9 @@ type ExcludeObject struct {
 }
 
 type SyncObject struct {
-	SourceConnection ConnectionObject `json:"source"`
-	DstConnection    ConnectionObject `json:"destination"`
-	Exclusions       ExcludeObject    `json:"exclude"`
+	SourceConnections []ConnectionObject `json:"sources"`
+	DstConnection     ConnectionObject   `json:"destination"`
+	Exclusions        ExcludeObject      `json:"exclude"`
 }
 
 type LastModifiedObject struct {
